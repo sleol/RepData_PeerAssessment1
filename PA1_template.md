@@ -1,15 +1,11 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 
 ##Loading & Preprocessing the data
 
 First read the data into R
-```{r}
+
+```r
 setwd("~/datasciencecoursera/RepRes/Ass1")
 txt_file<- "activity.csv"
 
@@ -20,26 +16,34 @@ data_set <- read.csv(txt_file,
 
 Then update the date & interval variable types
 
-```{r}
 
+```r
 data_set$interval <- factor(data_set$interval)
 data_set$date <- as.Date(data_set$date, format="%Y-%m-%d")
-
 ```
 
 
 ##What is mean total number of steps taken per day?
 
 Create and aggregated dataset (aggregating on the date)
-```{r}
+
+```r
 steps_taken_per_day <- aggregate(steps ~ date, data_set, sum)
 colnames(steps_taken_per_day) <- c("date", "steps")
 ```
 
 Plot a histogram of the total number of steps per day
 
-```{r}
+
+```r
 require(ggplot2)
+```
+
+```
+## Loading required package: ggplot2
+```
+
+```r
 ggplot(steps_taken_per_day, aes(x = steps)) + 
   geom_histogram(fill = "darkblue", binwidth = 1000) + 
   labs(title="Histogram of Steps Taken per Day", 
@@ -47,32 +51,39 @@ ggplot(steps_taken_per_day, aes(x = steps)) +
   theme_bw() 
 ```
 
+![plot of chunk unnamed-chunk-4](./PA1_template_files/figure-html/unnamed-chunk-4.png) 
+
 Calculate the mean & median total number of steps per day
 
-```{r}
+
+```r
 mean_steps = round(mean(steps_taken_per_day$steps, na.rm=TRUE), 2)
 median_steps = round(median(steps_taken_per_day$steps, na.rm=TRUE), 2)
 ```
 The mean number of steps:
-```{r,echo=FALSE}
-mean_steps
+
+```
+## [1] 10766
 ```
 
 The median number of steps:
-```{r,echo=FALSE}
-median_steps
+
+```
+## [1] 10765
 ```
 
 ##What is the average daily activity pattern?
 
 Aggregate the data on interval
-```{r}
+
+```r
 steps_per_interval <- aggregate(data_set$steps,by = list(interval = data_set$interval),FUN=mean, na.rm=TRUE)
 ```
 
 
 Convert to integers for plotting & plot
-```{r}
+
+```r
 steps_per_interval$interval <- 
   as.integer(levels(steps_per_interval$interval)[steps_per_interval$interval])
 colnames(steps_per_interval) <- c("interval", "steps")
@@ -81,14 +92,20 @@ ggplot(steps_per_interval, aes(x=interval, y=steps)) +
   geom_line(color="darkblue", size=1) +  
   labs(title="Average Daily Activity Pattern", x="Interval", y="Number of steps") +  
   theme_bw() + theme(legend.position = "bottom")
-
 ```
+
+![plot of chunk unnamed-chunk-9](./PA1_template_files/figure-html/unnamed-chunk-9.png) 
 
 Which 5 minute interval on average across all the days in teh dataset contains the maximum number of steps?
 
-```{r}
+
+```r
 max_step_interval <- steps_per_interval[which.max(steps_per_interval$steps),]$interval
 max_step_interval
+```
+
+```
+## [1] 835
 ```
 
 
@@ -96,14 +113,20 @@ max_step_interval
 
 Calculate the number of missing values in the dataset:
 
-```{r}
+
+```r
 no_missing_values<-sum(is.na(data_set$steps))
 no_missing_values
 ```
 
+```
+## [1] 2304
+```
+
 Fill in missing data (using mean values of each 5 minute interval)
 
-```{r}
+
+```r
 fill_na <- function(data, defaults) {
   na_indices <- which(is.na(data$steps))
   na_replacements <- unlist(lapply(na_indices, FUN=function(idx){
@@ -119,18 +142,19 @@ data_fill <- data.frame(
   steps = fill_na(data_set, steps_per_interval),  
   date = data_set$date,  
   interval = data_set$interval)
-
 ```
 
 Aggregate the filled data by date
-```{r}
+
+```r
 full_steps_per_day <- aggregate(steps ~ date, data_fill, sum)
 colnames(full_steps_per_day) <- c("date", "steps")
 ```
 
 
 Plot a histogram of the filled data:
-```{r}
+
+```r
 ggplot(full_steps_per_day, aes(x=steps)) + 
   geom_histogram(fill="darkblue", binwidth=1000) + 
   labs(title="Histogram of Full Steps Taken per Day", 
@@ -139,20 +163,24 @@ ggplot(full_steps_per_day, aes(x=steps)) +
   theme_bw()    
 ```
 
+![plot of chunk unnamed-chunk-14](./PA1_template_files/figure-html/unnamed-chunk-14.png) 
+
 
 Calcualte the new mean & median values of total steps per day
-```{r}
+
+```r
 full_mean_steps = round(mean(full_steps_per_day$steps), 2)
 full_median_steps = round(median(full_steps_per_day$steps), 2)
-
 ```
 The mean number of steps is
-```{r,echo=FALSE}
-full_mean_steps
+
+```
+## [1] 10766
 ```
 The median number of steps is
-```{r,echo=FALSE}
-full_median_steps
+
+```
+## [1] 10766
 ```
 The process of replacing missing values with the mean of their 5 minute interval has resulted in very little impact on the mean & median. THe mean remains unchanged, whilst the median is moved by <0.01%
 
@@ -161,7 +189,8 @@ The process of replacing missing values with the mean of their 5 minute interval
 
 Add a factor variable to the dataset with two levels "weekday" & "weekend"
 
-```{r}
+
+```r
 data_fill$weekday<-weekdays(data_fill$date)
 
 for (i in 1:nrow(data_fill)){
@@ -177,17 +206,28 @@ data_fill$weekday<-as.factor(data_fill$weekday)
 
 Aggregate the data on interval (keeping weekday in the resultant dataframe)
 
-```{r}
+
+```r
 averagestepsinterval<-aggregate(steps ~ interval+weekday, data = data_fill, mean)
 ```
 
 Plot interval against average number of steps for weekdays & weekends in a panel plot:
-```{r}
+
+```r
 require(lattice)
+```
+
+```
+## Loading required package: lattice
+```
+
+```r
 averagestepsinterval$interval<-as.integer(levels(averagestepsinterval$interval)[averagestepsinterval$interval])
 xyplot(steps ~ interval | weekday, averagestepsinterval, type = "l", layout = c(1, 2), 
        xlab = "Interval", ylab = "Number of steps")
 ```
+
+![plot of chunk unnamed-chunk-20](./PA1_template_files/figure-html/unnamed-chunk-20.png) 
 
 we can see from the above graphs that the subject begins activity earlier on weekdays, but has a lower average  activity level across the day.
 
